@@ -47,7 +47,7 @@ _This section lists the planned stack and will be updated to reflect what is act
 
 ## Features
 
-None completed yet. See the Roadmap.
+None completed yet.
 
 ## Prerequisites
 
@@ -59,11 +59,7 @@ None completed yet. See the Roadmap.
 
 ## Installation, running and tests
 
-Not available yet. These sections will be completed as the project progresses.
-
-## Screenshots
-
-To be added.
+Not available yet.
 
 ## Roadmap
 
@@ -87,7 +83,7 @@ test environment.
 ## Author
 
 **EL HOSSNI LAHOUSSINE**, engineering student at ENSA Agadir
-GitHub: [@<ton-username>](https://github.com/Elhoussine-07)
+GitHub: [@<Elhoussine-07>](https://github.com/Elhoussine-07)
 
 ## License
 
