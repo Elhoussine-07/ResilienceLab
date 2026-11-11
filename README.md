@@ -2,10 +2,6 @@
 
 **Distributed Systems Reliability & Performance Engineering Platform**
 
-> **Status: under active development.** This repository is being built step by step.
-> Nothing below should be read as already implemented unless it is checked in the
-> [Roadmap](#roadmap).
-
 ## Description
 
 ResilienceLab is a platform to configure, run and analyse reliability and performance
