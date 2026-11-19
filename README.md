@@ -50,14 +50,14 @@ The project has two parts.
 
 Six microservices that implement real business logic with synchronous and asynchronous communication:
 
-| Service | Responsibility |
-|---|---|
-| Product Catalog | Products and prices |
-| Order | Order lifecycle and saga orchestration |
-| Inventory | Stock management and reservations |
-| Payment | Simulated, idempotent payment processing |
-| Shipping | Shipment creation after confirmed orders |
-| Notification | Customer notifications from domain events |
+| Service         | Responsibility                            |
+| --------------- | ----------------------------------------- |
+| Product Catalog | Products and prices                       |
+| Order           | Order lifecycle and saga orchestration    |
+| Inventory       | Stock management and reservations         |
+| Payment         | Simulated, idempotent payment processing  |
+| Shipping        | Shipment creation after confirmed orders  |
+| Notification    | Customer notifications from domain events |
 
 ### Part B: ResilienceLab platform
 
@@ -133,46 +133,46 @@ sequenceDiagram
 
 ## Reliability patterns
 
-| Pattern | Purpose |
-|---|---|
-| Saga (orchestrated) | Keep data consistent across services without distributed transactions |
-| Transactional Outbox | Never lose an event when the broker is unavailable |
-| Idempotency | Process a duplicated request or message only once |
-| Manual ACK / NACK | Redeliver messages after a consumer crash |
-| Retry with exponential backoff | Absorb transient failures |
-| Dead Letter Queue | Isolate messages that cannot be processed |
-| Timeout | Bound the wait on slow dependencies |
-| Circuit Breaker | Stop calling a failing dependency and fail fast |
-| Bulkhead | Prevent one dependency from exhausting shared resources |
-| Concurrency control | Guarantee a single reservation for the last item |
+| Pattern                        | Purpose                                                               |
+| ------------------------------ | --------------------------------------------------------------------- |
+| Saga (orchestrated)            | Keep data consistent across services without distributed transactions |
+| Transactional Outbox           | Never lose an event when the broker is unavailable                    |
+| Idempotency                    | Process a duplicated request or message only once                     |
+| Manual ACK / NACK              | Redeliver messages after a consumer crash                             |
+| Retry with exponential backoff | Absorb transient failures                                             |
+| Dead Letter Queue              | Isolate messages that cannot be processed                             |
+| Timeout                        | Bound the wait on slow dependencies                                   |
+| Circuit Breaker                | Stop calling a failing dependency and fail fast                       |
+| Bulkhead                       | Prevent one dependency from exhausting shared resources               |
+| Concurrency control            | Guarantee a single reservation for the last item                      |
 
 ## Experiment scenarios
 
 Each scenario will be documented with its context, configuration, execution steps, collected metrics, expected result, **observed result** and conclusions in [`docs/experiments`](docs/experiments/).
 
-| # | Scenario | Expected outcome |
-|---|---|---|
-| 1 | Payment failure | Order not confirmed, stock released |
-| 2 | Duplicate payment | Exactly one payment recorded |
-| 3 | Consumer crash before ACK | Message redelivered, no double business processing |
-| 4 | RabbitMQ outage | Outbox events persisted and published after recovery |
-| 5 | Network latency Order → Payment | Controlled behaviour via timeout and circuit breaker |
-| 6 | Stock race condition | Only one reservation succeeds for the last item |
-| 7 | High load | Throughput, P95/P99 latency and error rate measured |
-| 8 | Recovery | Controlled resume and consistent data |
+| #   | Scenario                        | Expected outcome                                     |
+| --- | ------------------------------- | ---------------------------------------------------- |
+| 1   | Payment failure                 | Order not confirmed, stock released                  |
+| 2   | Duplicate payment               | Exactly one payment recorded                         |
+| 3   | Consumer crash before ACK       | Message redelivered, no double business processing   |
+| 4   | RabbitMQ outage                 | Outbox events persisted and published after recovery |
+| 5   | Network latency Order → Payment | Controlled behaviour via timeout and circuit breaker |
+| 6   | Stock race condition            | Only one reservation succeeds for the last item      |
+| 7   | High load                       | Throughput, P95/P99 latency and error rate measured  |
+| 8   | Recovery                        | Controlled resume and consistent data                |
 
 ## Technology stack
 
-| Area | Technologies |
-|---|---|
-| Backend | Java 21, Spring Boot 3, Spring Data JPA, Spring Cloud Gateway, Resilience4j |
-| Messaging | RabbitMQ, Spring AMQP |
-| Database | PostgreSQL |
-| Frontend | React, TypeScript |
-| Testing | JUnit 5, Mockito, Testcontainers, k6, Toxiproxy |
-| Observability | Prometheus, Grafana, OpenTelemetry, Jaeger |
-| DevOps | Docker, Docker Compose, GitHub Actions, JaCoCo, Trivy |
-| Cloud | AWS EC2, Terraform (optional) |
+| Area          | Technologies                                                                |
+| ------------- | --------------------------------------------------------------------------- |
+| Backend       | Java 21, Spring Boot 3, Spring Data JPA, Spring Cloud Gateway, Resilience4j |
+| Messaging     | RabbitMQ, Spring AMQP                                                       |
+| Database      | PostgreSQL                                                                  |
+| Frontend      | React, TypeScript                                                           |
+| Testing       | JUnit 5, Mockito, Testcontainers, k6, Toxiproxy                             |
+| Observability | Prometheus, Grafana, OpenTelemetry, Jaeger                                  |
+| DevOps        | Docker, Docker Compose, GitHub Actions, JaCoCo, Trivy                       |
+| Cloud         | AWS EC2, Terraform (optional)                                               |
 
 ## Repository structure
 
@@ -210,16 +210,33 @@ git switch develop
 
 ### Run the Product Catalog service
 
-```bash
+1. Create your `.env` and start the infrastructure (see the [development guide](docs/development/README.md)).
+2. Load the `.env` values into your shell, then start the service.
+
+PowerShell:
+
+```powershell
+Get-Content .env | ForEach-Object { if ($_ -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$') { Set-Item -Path "Env:$($matches[1])" -Value $matches[2].Trim() } }
 cd services/product-catalog-service
-./mvnw spring-boot:run          # Windows: .\mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
+
+Bash:
+
+```bash
+set -a; source .env; set +a
+cd services/product-catalog-service
+./mvnw spring-boot:run
+```
+
+3. Check the service and call the API:
 
 ```bash
 curl http://localhost:8081/actuator/health
+curl http://localhost:8081/api/v1/products
 ```
 
-Expected response: `{"status":"UP","groups":["liveness","readiness"]}`
+The API is documented in [docs/api](docs/api/README.md).
 
 Instructions for the full stack (infrastructure, all services, load tests, dashboards) are added to this section as each component is delivered.
 
@@ -234,12 +251,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Roadmap
 
-| Phase | Focus |
-|---|---|
-| 1 | Repository foundations, infrastructure (PostgreSQL, RabbitMQ), six microservices, order workflow |
-| 2 | Saga, Transactional Outbox, idempotency, ACK/NACK, retry, DLQ, Resilience4j, concurrency tests |
-| 3 | k6 load tests, Toxiproxy fault injection, Prometheus, Grafana, OpenTelemetry, Jaeger |
-| 4 | ResilienceLab backend and React dashboard, CI/CD, containerisation, AWS deployment, final documentation |
+| Phase | Focus                                                                                                   |
+| ----- | ------------------------------------------------------------------------------------------------------- |
+| 1     | Repository foundations, infrastructure (PostgreSQL, RabbitMQ), six microservices, order workflow        |
+| 2     | Saga, Transactional Outbox, idempotency, ACK/NACK, retry, DLQ, Resilience4j, concurrency tests          |
+| 3     | k6 load tests, Toxiproxy fault injection, Prometheus, Grafana, OpenTelemetry, Jaeger                    |
+| 4     | ResilienceLab backend and React dashboard, CI/CD, containerisation, AWS deployment, final documentation |
 
 **Possible extensions:** Terraform automation, Jenkins pipeline, Kubernetes, Kafka.
 
