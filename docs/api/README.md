@@ -63,3 +63,25 @@ Reservation request body:
 
 Concurrency guarantees: stock updates are single atomic SQL statements, so the available
 quantity can never become negative, and replaying a reservation never reserves twice.
+
+## Payment Service
+
+Base URL (local): `http://localhost:8083/api/v1`
+
+| Method | Path                         | Description                                               | Success                         | Errors                                                                                                             |
+| ------ | ---------------------------- | --------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| POST   | `/payments`                  | Process a payment (requires the `Idempotency-Key` header) | `201` processed, `200` replayed | `400` invalid payload or key, `409` order already paid with another key, `422` key reused with a different request |
+| GET    | `/payments/{id}`             | Read a payment                                            | `200`                           | `404`                                                                                                              |
+| GET    | `/payments/orders/{orderId}` | Read the payment of an order                              | `200`                           | `404`                                                                                                              |
+
+Request body:
+
+```json
+{ "orderId": "<uuid>", "amount": 49.9, "currency": "EUR" }
+```
+
+A declined payment is a normal business outcome: the response is `201` with `"status": "DECLINED"`
+and a `failureReason`. Amounts above `payment.simulation.max-approved-amount` (default 10000.00) are declined.
+
+Guarantees: one payment per idempotency key and one payment per order, enforced by unique
+constraints in the database, so concurrent duplicates cannot create two payments.
