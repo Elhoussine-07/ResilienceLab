@@ -85,3 +85,46 @@ and a `failureReason`. Amounts above `payment.simulation.max-approved-amount` (d
 
 Guarantees: one payment per idempotency key and one payment per order, enforced by unique
 constraints in the database, so concurrent duplicates cannot create two payments.
+
+
+
+## Events published by the Order Service
+
+Broker: RabbitMQ. Exchange: `orders.events` (type `topic`, durable). Messages are JSON, persistent
+(`delivery_mode 2`), with the AMQP `message_id` set to the event `eventId`.
+
+```mermaid
+flowchart LR
+    ORD[Order Service] -- "order.confirmed / order.cancelled" --> EX{{orders.events}}
+    EX -. "bindings declared by each consumer" .-> Q1[(shipping queue)]
+    EX -. "bindings declared by each consumer" .-> Q2[(notification queue)]
+```
+
+| Routing key | Event type | Published when |
+|---|---|---|
+| `order.confirmed` | `OrderConfirmed` | Stock reserved and payment approved |
+| `order.cancelled` | `OrderCancelled` | Stock unavailable, payment declined, or a service unavailable |
+
+Payload:
+
+```json
+{
+  "eventId": "<uuid>",
+  "eventType": "OrderConfirmed",
+  "occurredAt": "2026-11-20T10:15:30.123456Z",
+  "orderId": "<uuid>",
+  "customerEmail": "student@example.com",
+  "currency": "EUR",
+  "totalAmount": 159.80,
+  "cancellationReason": null,
+  "items": [{ "productId": "<uuid>", "quantity": 2, "unitPrice": 79.90 }]
+}
+```
+
+`cancellationReason` is one of `STOCK_UNAVAILABLE`, `PAYMENT_DECLINED`, `PAYMENT_UNAVAILABLE`,
+`INVENTORY_UNAVAILABLE` for `OrderCancelled`, and `null` for `OrderConfirmed`.
+
+Delivery guarantees of this version: publication is best effort and happens after the order is
+committed. If the broker is unavailable at that moment the event is logged and lost (no retry).
+Consumers must still be idempotent on `eventId`, because duplicates will exist once retries and the
+transactional outbox are added.
