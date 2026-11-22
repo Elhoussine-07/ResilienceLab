@@ -128,3 +128,27 @@ Delivery guarantees of this version: publication is best effort and happens afte
 committed. If the broker is unavailable at that moment the event is logged and lost (no retry).
 Consumers must still be idempotent on `eventId`, because duplicates will exist once retries and the
 transactional outbox are added.
+
+
+## Shipping Service
+
+Base URL (local): `http://localhost:8085/api/v1`
+
+| Method | Path | Description | Success | Errors |
+|---|---|---|---|---|
+| GET | `/shipments/{id}` | Read a shipment | `200` | `400` malformed id, `404` |
+| GET | `/shipments/orders/{orderId}` | Read the shipment of an order | `200` | `404` |
+
+Shipments are not created through the API: they are created by consuming `OrderConfirmed` events.
+
+### Messages consumed
+
+| Queue | Bound to | Routing key | Event |
+|---|---|---|---|
+| `shipping.order-confirmed` (durable) | `orders.events` | `order.confirmed` | `OrderConfirmed` |
+
+Processing rules: one shipment per order. The consumer is idempotent: an event whose `eventId`
+was already handled is ignored, and a second event for an order that already has a shipment
+creates nothing. The message is acknowledged after processing, so a crash before the
+acknowledgement leads to a redelivery. Messages that cannot be parsed or lack required fields are
+rejected without requeue (they are lost until a dead letter queue is added).
