@@ -21,3 +21,4 @@ create_service_database inventory_db      inventory_user
 create_service_database payment_db        payment_user
 create_service_database shipping_db       shipping_user
 create_service_database resiliencelab_db  resiliencelab_user
+create_service_database notification_db   notification_user
